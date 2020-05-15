@@ -556,13 +556,9 @@ RCT_EXPORT_MODULE()
         
             organizerEmail = [organizerDescriptionData valueForKey:@"email"];
             organizer = [organizerDescriptionData valueForKey:@"phone"];
-            
-            if(descriptionDataOrganizer){
-               NSString *email = [descriptionDataOrganizer valueForKey:@"email"];
-               NSString *name =  [descriptionDataOrganizer valueForKey:@"name"];
-               [formedCalendarEvent setValue:@{@"email": email, @"name":name,} forKey:@"organizer"];
-            }
         }
+        
+        [formedCalendarEvent setValue:organizerEmail forKey:@"organizer"];
         
         NSMutableArray *attendees = [[NSMutableArray alloc] init];
         Boolean organizerFound = NO;
