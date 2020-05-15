@@ -558,10 +558,9 @@ RCT_EXPORT_MODULE()
             organizer = [organizerDescriptionData valueForKey:@"phone"];
             
             if(descriptionDataOrganizer){
-                           NSString *email = [descriptionDataOrganizer valueForKey:@"email"];
-                           NSString *name =  [descriptionDataOrganizer valueForKey:@"name"];
-                           
-                           [formedCalendarEvent setValue:@{@"email": email, @"name":name,} forKey:@"organizer"];
+               NSString *email = [descriptionDataOrganizer valueForKey:@"email"];
+               NSString *name =  [descriptionDataOrganizer valueForKey:@"name"];
+               [formedCalendarEvent setValue:@{@"email": email, @"name":name,} forKey:@"organizer"];
             }
         }
         
