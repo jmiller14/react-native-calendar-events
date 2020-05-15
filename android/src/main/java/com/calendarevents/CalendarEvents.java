@@ -47,7 +47,6 @@ public class CalendarEvents extends ReactContextBaseJavaModule {
     private final ReactContext reactContext;
     private static final String RNC_PREFS = "REACT_NATIVE_CALENDAR_PREFERENCES";
     private static final HashMap<Integer, Promise> permissionsPromises = new HashMap<>();
-    private static final String EMAIL = "email";
 
     public CalendarEvents(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -99,7 +98,7 @@ public class CalendarEvents extends ReactContextBaseJavaModule {
         return writePermission == PackageManager.PERMISSION_GRANTED &&
                 readPermission == PackageManager.PERMISSION_GRANTED;
     }
-    
+
     private boolean shouldShowRequestPermissionRationale() {
                 Activity currentActivity = getCurrentActivity();
 
@@ -258,7 +257,7 @@ public class CalendarEvents extends ReactContextBaseJavaModule {
         ContentResolver cr = reactContext.getContentResolver();
         String query = "(" + CalendarContract.Attendees.EVENT_ID + " = ?)";
         String[] args = new String[]{eventID};
-         cursor = cr.query(CalendarContract.Attendees.CONTENT_URI, new String[]{
+        cursor = cr.query(CalendarContract.Attendees.CONTENT_URI, new String[]{
                 CalendarContract.Attendees._ID,
                 CalendarContract.Attendees.EVENT_ID,
                 CalendarContract.Attendees.ATTENDEE_NAME,
@@ -349,35 +348,12 @@ public class CalendarEvents extends ReactContextBaseJavaModule {
                 CalendarContract.Instances.ORIGINAL_ID,
                 CalendarContract.Instances.EVENT_ID,
                 CalendarContract.Instances.DURATION,
-                CalendarContract.Instances.ORIGINAL_SYNC_ID
+                CalendarContract.Instances.ORIGINAL_SYNC_ID,
+                CalendarContract.Events.ORGANIZER
         }, selection, null, null);
 
 
         return serializeEvents(cursor);
-    }
-
-    private WritableNativeMap findOrganiserByEventById(String eventID) {
-
-        WritableNativeMap organiserMap = new WritableNativeMap();
-
-        Cursor cursor = null;
-        ContentResolver cr = reactContext.getContentResolver();
-        Uri uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, Integer.parseInt(eventID));
-
-        String selection = "((" + CalendarContract.Events.DELETED + " != 1))";
-
-        cursor = cr.query(uri, new String[]{
-                CalendarContract.Events._ID,
-                CalendarContract.Events.ORGANIZER
-        }, selection, null, null);
-
-        if (cursor.getCount() > 0) {
-            cursor.moveToFirst();
-            organiserMap.putString(CalendarContract.Calendars.NAME, cursor.getString(1));
-            organiserMap.putString(EMAIL, cursor.getString(1));
-        }
-        cursor.close();
-        return organiserMap;
     }
 
     private WritableNativeMap findEventById(String eventID) {
@@ -444,7 +420,8 @@ public class CalendarEvents extends ReactContextBaseJavaModule {
                 CalendarContract.Instances.HAS_ALARM,
                 CalendarContract.Instances.ORIGINAL_ID,
                 CalendarContract.Instances.EVENT_ID,
-                CalendarContract.Instances.DURATION
+                CalendarContract.Instances.DURATION,
+                CalendarContract.Events.ORGANIZER
         }, selection, null, null);
 
         if (cursor != null && cursor.moveToFirst()) {
@@ -1091,7 +1068,7 @@ public class CalendarEvents extends ReactContextBaseJavaModule {
         event.putString("location", cursor.getString(6));
         event.putString("availability", availabilityStringMatchingConstant(cursor.getInt(9)));
         event.putArray("attendees", (WritableArray) findAttendeesByEventId(cursor.getString(0)));
-        event.putMap(CalendarContract.Events.ORGANIZER,findOrganiserByEventById(cursor.getString(0)));
+
         if (cursor.getInt(10) > 0) {
             event.putArray("alarms", findReminderByEventId(cursor.getString(0), Long.parseLong(cursor.getString(3))));
         } else {
@@ -1105,6 +1082,10 @@ public class CalendarEvents extends ReactContextBaseJavaModule {
 
         if (cursor.getColumnIndex(CalendarContract.Instances.ORIGINAL_SYNC_ID) != -1 && cursor.getString(cursor.getColumnIndex(CalendarContract.Instances.ORIGINAL_SYNC_ID)) != null) {
             event.putString("syncId", cursor.getString(cursor.getColumnIndex(CalendarContract.Instances.ORIGINAL_SYNC_ID)));
+        }
+
+        if (cursor.getColumnIndex(CalendarContract.Events.ORGANIZER) != -1 && cursor.getString(cursor.getColumnIndex(CalendarContract.Events.ORGANIZER)) != null) {
+            event.putString("organizer", cursor.getString(cursor.getColumnIndex(CalendarContract.Events.ORGANIZER)));
         }
 
         return event;
@@ -1191,7 +1172,7 @@ public class CalendarEvents extends ReactContextBaseJavaModule {
         } else if (!permissionRequested) {
             promise.resolve("undetermined");
         } else if(this.shouldShowRequestPermissionRationale()) {
-            promise.resolve("denied"); 
+            promise.resolve("denied");
         } else {
             promise.resolve("restricted");
         }
